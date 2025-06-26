@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors */
+    --color-primary: #1E40AF; /* Deep blue (primary) - blue-800 */
+    --color-secondary: #64748B; /* Professional slate gray (secondary) - slate-500 */
+    --color-accent: #0EA5E9; /* Bright blue (accent) - sky-500 */
+    
+    /* Background Colors */
+    --color-background: #FAFAFA; /* Warm off-white (background) - gray-50 */
+    --color-surface: #FFFFFF; /* Pure white (surface) - white */
+    
+    /* Text Colors */
+    --color-text-primary: #1E293B; /* Dark slate (text primary) - slate-800 */
+    --color-text-secondary: #64748B; /* Medium gray (text secondary) - slate-500 */
+    
+    /* Status Colors */
+    --color-success: #059669; /* Professional green (success) - emerald-600 */
+    --color-warning: #D97706; /* Amber orange (warning) - amber-600 */
+    --color-error: #DC2626; /* Clear red (error) - red-600 */
+    
+    /* Border Colors */
+    --color-border: #E2E8F0; /* Light gray (border) - slate-200 */
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-text-primary font-body;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-caption {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-data {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .transition-micro {
+    transition: all 150ms ease-out;
+  }
+
+  .transition-standard {
+    transition: all 200ms ease-out;
+  }
+
+  .transition-layout {
+    transition: all 300ms ease-in-out;
+  }
+
+  .shadow-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-overlay {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .transition-micro,
+    .transition-standard,
+    .transition-layout {
+      transition: none;
+    }
+  }
+}
