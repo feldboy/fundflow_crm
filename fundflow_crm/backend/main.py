@@ -13,7 +13,9 @@ from app.api import plaintiffs, law_firms, employees, communications, documents,
 from app.core.auth import verify_token
 
 # Load environment variables
-load_dotenv()
+# First load .env (defaults), then .env.local (overrides)
+load_dotenv('.env')
+load_dotenv('.env.local', override=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
