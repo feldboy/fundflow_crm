@@ -8,7 +8,8 @@ import uvicorn
 import os
 from dotenv import load_dotenv
 
-from app.core.database import init_database, close_database
+from app.core.database import init_database, close_database, get_database_status, get_database
+from app.core.mongo_setup import initialize_collections, seed_sample_data, check_database_health
 from app.api import plaintiffs, law_firms, employees, communications, documents, ai_agents, google
 from app.core.auth import verify_token
 
@@ -21,6 +22,7 @@ load_dotenv('.env.local', override=True)
 async def lifespan(app: FastAPI):
     # Startup
     await init_database()
+    await initialize_collections()
     yield
     # Shutdown
     await close_database()
@@ -55,7 +57,66 @@ async def root():
 # Health check
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    """Health check endpoint for deployment platforms"""
+    try:
+        db_status = await get_database_status()
+        return {
+            "status": "healthy",
+            "database": db_status,
+            "timestamp": "2025-06-27"
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "error": str(e)}
+        )
+
+# Database status endpoint
+@app.get("/api/v1/database/status")
+async def database_status():
+    """Get the current database connection status"""
+    db_status = await get_database_status()
+    return db_status
+
+# Database health check
+@app.get("/api/v1/database/health")
+async def database_health():
+    """Detailed database health check with collection info"""
+    health_status = await check_database_health()
+    return health_status
+
+# Initialize database collections (admin endpoint)
+@app.post("/api/v1/database/init")
+async def initialize_database():
+    """Initialize database collections and indexes"""
+    try:
+        await initialize_collections()
+        return {"message": "Database collections initialized successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to initialize database: {str(e)}")
+
+# Seed sample data (admin endpoint)
+@app.post("/api/v1/database/seed")
+async def seed_database():
+    """Seed database with sample data for development"""
+    try:
+        await seed_sample_data()
+        return {"message": "Database seeded with sample data successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to seed database: {str(e)}")
+
+# Reset database (admin endpoint)
+@app.post("/api/v1/database/reset")
+async def reset_database():
+    """Reset database by clearing all collections"""
+    try:
+        db = await get_database()
+        collections = await db.list_collection_names()
+        for collection_name in collections:
+            await db[collection_name].delete_many({})
+        return {"message": f"Reset {len(collections)} collections successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset database: {str(e)}")
 
 # Include API routers
 app.include_router(plaintiffs.router, prefix="/api/v1/plaintiffs", tags=["plaintiffs"])

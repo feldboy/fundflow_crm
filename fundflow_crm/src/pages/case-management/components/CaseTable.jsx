@@ -8,8 +8,7 @@ const CaseTable = ({
   onSort, 
   onSelectCase, 
   onSelectAll, 
-  onViewCase,
-  getStatusColor 
+  onViewCase
 }) => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -25,6 +24,24 @@ const CaseTable = ({
       day: 'numeric',
       year: 'numeric'
     }).format(date);
+  };
+
+  const getStatusColor = (status) => {
+    const statusColors = {
+      'New Lead': 'bg-blue-100 text-blue-800',
+      'Info Gathering': 'bg-yellow-100 text-yellow-800',
+      'Underwriting': 'bg-orange-100 text-orange-800',
+      'Offer Made': 'bg-purple-100 text-purple-800',
+      'Contracted': 'bg-green-100 text-green-800',
+      'Declined': 'bg-red-100 text-red-800',
+      'Cancelled': 'bg-gray-100 text-gray-800',
+      'Under Review': 'bg-blue-100 text-blue-800',
+      'Approved': 'bg-green-100 text-green-800',
+      'Pending Documents': 'bg-yellow-100 text-yellow-800',
+      'Medical Review': 'bg-orange-100 text-orange-800',
+      'Legal Review': 'bg-purple-100 text-purple-800'
+    };
+    return statusColors[status] || 'bg-gray-100 text-gray-800';
   };
 
   const getSortIcon = (columnKey) => {

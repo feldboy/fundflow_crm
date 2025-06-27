@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Icon from 'components/AppIcon';
+import { exportUtils } from 'utils/apiUtils';
 
 const BulkActionsModal = ({ selectedCases, onClose, onComplete }) => {
   const [selectedAction, setSelectedAction] = useState('');
@@ -30,11 +31,67 @@ const BulkActionsModal = ({ selectedCases, onClose, onComplete }) => {
   const handleExecuteAction = async () => {
     setIsProcessing(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsProcessing(false);
-    onComplete();
+    try {
+      switch (selectedAction) {
+        case 'export':
+          handleExport();
+          break;
+        case 'status':
+          // TODO: Implement status change
+          console.log('Changing status to:', newStatus);
+          break;
+        case 'assign':
+          // TODO: Implement assignment
+          console.log('Assigning cases');
+          break;
+        case 'delete':
+          // TODO: Implement deletion
+          console.log('Deleting cases');
+          break;
+        default:
+          console.log('Unknown action:', selectedAction);
+      }
+      
+      // Simulate processing time for non-export actions
+      if (selectedAction !== 'export') {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+    } catch (error) {
+      console.error('Action failed:', error);
+      alert('Action failed: ' + error.message);
+    } finally {
+      setIsProcessing(false);
+      onComplete();
+    }
+  };
+
+  const handleExport = () => {
+    try {
+      if (!selectedCases || selectedCases.length === 0) {
+        throw new Error('No cases selected for export');
+      }
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `cases_export_${timestamp}`;
+
+      switch (exportFormat) {
+        case 'csv':
+          exportUtils.toCSV(selectedCases, `${filename}.csv`);
+          break;
+        case 'json':
+          exportUtils.toJSON(selectedCases, `${filename}.json`);
+          break;
+        case 'excel':
+          // For now, use CSV format for Excel
+          exportUtils.toCSV(selectedCases, `${filename}.csv`);
+          break;
+        default:
+          throw new Error('Unsupported export format');
+      }
+    } catch (error) {
+      throw new Error(`Export failed: ${error.message}`);
+    }
   };
 
   const getActionDescription = () => {

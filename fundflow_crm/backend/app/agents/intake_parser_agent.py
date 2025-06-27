@@ -3,16 +3,36 @@ import os
 from typing import Dict, Any, Optional
 from datetime import datetime
 import json
+from app.core.config import settings
 
 class IntakeParserAgent:
     def __init__(self):
-        genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        self.api_available = False
+        self.error_message = None
+        
+        try:
+            if not settings.google_api_key or settings.google_api_key == "your-google-api-key-here":
+                self.error_message = "Google API key is not configured"
+                print("Warning: Google API key is not configured for IntakeParserAgent")
+                return
+                
+            genai.configure(api_key=settings.google_api_key)
+            self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            self.api_available = True
+        except Exception as e:
+            self.error_message = f"Failed to initialize Google AI: {str(e)}"
+            print(f"Error initializing IntakeParserAgent: {e}")
         
     async def parse_intake_text(self, intake_text: str) -> Dict[str, Any]:
         """
         Parse intake text/email and extract plaintiff information
         """
+        
+        # Check if API is available
+        if not self.api_available:
+            print(f"AI service unavailable: {self.error_message}")
+            return self._create_fallback_response(intake_text, self.error_message)
+        
         prompt = f"""
         You are an AI assistant that extracts plaintiff information from intake forms or emails for a pre-settlement funding company.
         
@@ -58,18 +78,24 @@ class IntakeParserAgent:
                     
         except Exception as e:
             print(f"Error in intake parsing: {e}")
-            return {
-                "error": f"Failed to parse intake text: {str(e)}",
-                "firstName": None,
-                "lastName": None,
-                "email": None,
-                "phone": None,
-                "address": None,
-                "caseType": "Other",
-                "incidentDate": None,
-                "requestedAmount": None,
-                "caseNotes": intake_text[:500] + "..." if len(intake_text) > 500 else intake_text
-            }
+            return self._create_fallback_response(intake_text, str(e))
+    
+    def _create_fallback_response(self, intake_text: str, error_msg: str) -> Dict[str, Any]:
+        """Create a fallback response when AI is unavailable"""
+        return {
+            "error": f"AI service unavailable: {error_msg}",
+            "aiStatus": "unavailable",
+            "firstName": None,
+            "lastName": None,
+            "email": None,
+            "phone": None,
+            "address": None,
+            "caseType": "Other",
+            "incidentDate": None,
+            "requestedAmount": None,
+            "caseNotes": intake_text[:500] + "..." if len(intake_text) > 500 else intake_text,
+            "originalText": intake_text
+        }
     
     async def suggest_workflow_stage(self, plaintiff_data: Dict[str, Any]) -> str:
         """

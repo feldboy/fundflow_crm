@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Dict, Any, Optional
 
 from app.core.database import get_database
+from app.core.config import settings
 from app.agents.intake_parser_agent import IntakeParserAgent
 from app.agents.comms_drafting_agent import CommsDraftingAgent
 from app.agents.risk_scoring_agent import RiskScoringAgent
@@ -65,6 +66,20 @@ async def parse_intake(request: IntakeParseRequest, db=Depends(get_database)):
     """
     try:
         parser = IntakeParserAgent()
+        
+        # Check if AI service is available
+        if not parser.api_available:
+            # Return response with warning but continue with fallback
+            parsed_data = await parser.parse_intake_text(request.text)
+            suggested_stage = await parser.suggest_workflow_stage(parsed_data)
+            parsed_data["suggestedStage"] = suggested_stage
+            
+            return {
+                "success": True,
+                "warning": "AI service unavailable - using fallback processing",
+                "data": parsed_data
+            }
+        
         parsed_data = await parser.parse_intake_text(request.text)
         
         # Suggest workflow stage
@@ -76,6 +91,7 @@ async def parse_intake(request: IntakeParseRequest, db=Depends(get_database)):
             "data": parsed_data
         }
     except Exception as e:
+        print(f"Parse intake error: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to parse intake text: {str(e)}"
@@ -88,15 +104,25 @@ async def draft_communication(request: CommunicationDraftRequest, db=Depends(get
     """
     try:
         # Get plaintiff data
+        from app.core.database import use_mock_db
         from bson import ObjectId
-        plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+        
+        # Handle both ObjectId and string IDs depending on database type
+        if use_mock_db:
+            plaintiff = await db.plaintiffs.find_one({"_id": request.plaintiff_id})
+        else:
+            plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+            
         if not plaintiff:
             raise HTTPException(status_code=404, detail="Plaintiff not found")
         
         # Get law firm data if provided
         law_firm = None
         if request.law_firm_id:
-            law_firm = await db.law_firms.find_one({"_id": ObjectId(request.law_firm_id)})
+            if use_mock_db:
+                law_firm = await db.law_firms.find_one({"_id": request.law_firm_id})
+            else:
+                law_firm = await db.law_firms.find_one({"_id": ObjectId(request.law_firm_id)})
         
         # Initialize drafting agent
         drafter = CommsDraftingAgent()
@@ -131,8 +157,15 @@ async def analyze_risk(request: RiskAnalysisRequest, db=Depends(get_database)):
     Analyze risk factors for a plaintiff case using advanced AI
     """
     try:
+        from app.core.database import use_mock_db
         from bson import ObjectId
-        plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+        
+        # Handle both ObjectId and string IDs depending on database type
+        if use_mock_db:
+            plaintiff = await db.plaintiffs.find_one({"_id": request.plaintiff_id})
+        else:
+            plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+            
         if not plaintiff:
             raise HTTPException(status_code=404, detail="Plaintiff not found")
         
@@ -169,8 +202,14 @@ async def analyze_document(request: DocumentAnalysisRequest, db=Depends(get_data
         # Get plaintiff context if provided
         plaintiff_context = None
         if request.plaintiff_id:
+            from app.core.database import use_mock_db
             from bson import ObjectId
-            plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+            
+            # Handle both ObjectId and string IDs depending on database type
+            if use_mock_db:
+                plaintiff = await db.plaintiffs.find_one({"_id": request.plaintiff_id})
+            else:
+                plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
             plaintiff_context = plaintiff
         
         # Analyze document
@@ -197,8 +236,15 @@ async def underwriting_assessment(request: UnderwritingRequest, db=Depends(get_d
     Provide AI-powered underwriting assessment and recommendations
     """
     try:
+        from app.core.database import use_mock_db
         from bson import ObjectId
-        plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+        
+        # Handle both ObjectId and string IDs depending on database type
+        if use_mock_db:
+            plaintiff = await db.plaintiffs.find_one({"_id": request.plaintiff_id})
+        else:
+            plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+            
         if not plaintiff:
             raise HTTPException(status_code=404, detail="Plaintiff not found")
         
@@ -236,15 +282,25 @@ async def generate_contract(request: ContractGenerationRequest, db=Depends(get_d
     Generate AI-assisted funding contract
     """
     try:
+        from app.core.database import use_mock_db
         from bson import ObjectId
-        plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+        
+        # Handle both ObjectId and string IDs depending on database type
+        if use_mock_db:
+            plaintiff = await db.plaintiffs.find_one({"_id": request.plaintiff_id})
+        else:
+            plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+            
         if not plaintiff:
             raise HTTPException(status_code=404, detail="Plaintiff not found")
         
         # Get law firm information
         law_firm = None
         if plaintiff.get("lawFirmId"):
-            law_firm = await db.law_firms.find_one({"_id": ObjectId(plaintiff["lawFirmId"])})
+            if use_mock_db:
+                law_firm = await db.law_firms.find_one({"_id": plaintiff["lawFirmId"]})
+            else:
+                law_firm = await db.law_firms.find_one({"_id": ObjectId(plaintiff["lawFirmId"])})
         
         # Initialize contract generation agent
         contract_agent = ContractGenerationAgent()
@@ -355,8 +411,15 @@ async def validate_contract(request: ContractValidationRequest, db=Depends(get_d
     Validate a generated contract for legal compliance and completeness
     """
     try:
+        from app.core.database import use_mock_db
         from bson import ObjectId
-        plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+        
+        # Handle both ObjectId and string IDs depending on database type
+        if use_mock_db:
+            plaintiff = await db.plaintiffs.find_one({"_id": request.plaintiff_id})
+        else:
+            plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(request.plaintiff_id)})
+            
         if not plaintiff:
             raise HTTPException(status_code=404, detail="Plaintiff not found")
         
@@ -399,3 +462,47 @@ async def suggest_contract_amendments(request: ContractAmendmentRequest, db=Depe
             status_code=500,
             detail=f"Failed to suggest contract amendments: {str(e)}"
         )
+
+@router.get("/status")
+async def ai_services_status():
+    """
+    Check the status of AI services and configuration
+    """
+    try:
+        # Check AI configuration
+        ai_validation = settings.validate_ai_config()
+        db_validation = settings.validate_database_config()
+        
+        # Test individual services
+        services_status = {}
+        
+        # Test Intake Parser
+        try:
+            parser = IntakeParserAgent()
+            services_status["intake_parser"] = {
+                "available": parser.api_available,
+                "error": parser.error_message
+            }
+        except Exception as e:
+            services_status["intake_parser"] = {
+                "available": False,
+                "error": str(e)
+            }
+        
+        return {
+            "success": True,
+            "ai_config": ai_validation,
+            "database_config": db_validation,
+            "services": services_status,
+            "environment": {
+                "google_api_configured": bool(settings.google_api_key and settings.google_api_key != "your-google-api-key-here"),
+                "database_configured": bool(settings.mongodb_url)
+            }
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to check AI services status"
+        }

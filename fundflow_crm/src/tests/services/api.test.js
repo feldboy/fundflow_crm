@@ -35,7 +35,7 @@ describe('API Service', () => {
     const { default: apiClient } = await import('../../services/api');
     
     expect(mockedAxios.create).toHaveBeenCalledWith({
-      baseURL: 'http://localhost:8000/api/v1',
+      baseURL: 'http://localhost:8001/api/v1',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ describe('API Service', () => {
     
     const result = await healthCheck();
     expect(result).toEqual({ status: 'healthy' });
-    expect(mockedAxios.get).toHaveBeenCalledWith('http://localhost:8000/health');
+    expect(mockedAxios.get).toHaveBeenCalledWith('http://localhost:8001/health');
   });
 
   it('should export testConnection function', async () => {
@@ -60,7 +60,7 @@ describe('API Service', () => {
     
     const result = await testConnection();
     expect(result).toEqual({ message: 'OK' });
-    expect(mockedAxios.get).toHaveBeenCalledWith('http://localhost:8000/');
+    expect(mockedAxios.get).toHaveBeenCalledWith('http://localhost:8001/');
   });
 
   it('should handle healthCheck errors', async () => {

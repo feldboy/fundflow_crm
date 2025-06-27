@@ -19,29 +19,39 @@ class DocumentStatus(str, Enum):
     MISSING = "Missing"
 
 class DocumentBase(BaseModel):
-    plaintiffId: str
-    documentType: DocumentType
-    fileName: str
+    plaintiffId: Optional[str] = None
+    documentType: str = "Other"  # Changed from enum to string for flexibility
+    fileName: Optional[str] = None
+    filename: Optional[str] = None  # Support both naming conventions
+    originalName: Optional[str] = None
     storagePath: Optional[str] = None  # S3 link or file path
-    status: DocumentStatus = DocumentStatus.REQUESTED
+    fileId: Optional[str] = None
+    contentType: Optional[str] = None
+    size: Optional[int] = None
+    status: str = "Requested"  # Changed from enum to string
     extractedInfo: Optional[Dict[str, Any]] = None
     reviewNotes: Optional[str] = None
+    notes: Optional[str] = None
+    storageMethod: Optional[str] = None
 
 class DocumentCreate(DocumentBase):
     pass
 
 class DocumentUpdate(BaseModel):
     fileName: Optional[str] = None
+    filename: Optional[str] = None
+    documentType: Optional[str] = None
     storagePath: Optional[str] = None
-    status: Optional[DocumentStatus] = None
+    status: Optional[str] = None
     extractedInfo: Optional[Dict[str, Any]] = None
     reviewNotes: Optional[str] = None
+    notes: Optional[str] = None
 
 class DocumentInDB(DocumentBase):
-    id: str = Field(..., alias="_id")
-    uploadTimestamp: datetime
-    createdAt: datetime
-    updatedAt: datetime
+    id: Optional[str] = Field(None, alias="_id")
+    uploadTimestamp: Optional[datetime] = None
+    createdAt: Optional[datetime] = None
+    updatedAt: Optional[datetime] = None
 
     class Config:
         populate_by_name = True

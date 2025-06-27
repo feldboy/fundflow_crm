@@ -9,6 +9,8 @@ import RecentActivity from './components/RecentActivity';
 import UrgentTasks from './components/UrgentTasks';
 import QuickActions from './components/QuickActions';
 import CaseStatusSummary from './components/CaseStatusSummary';
+import DatabaseStatus from '../../components/DatabaseStatus';
+import EnvDebug from '../../components/EnvDebug';
 import { plaintiffService, communicationService } from '../../services';
 import { useApiOnMount } from '../../hooks/useApi';
 
@@ -154,6 +156,8 @@ const Dashboard = () => {
 
             {/* Right Sidebar */}
             <div className="xl:col-span-3 order-3 space-y-6">
+              <EnvDebug />
+              <DatabaseStatus />
               <QuickActions />
               <UrgentTasks />
               <RecentActivity data={recentCommunications} />

@@ -33,7 +33,12 @@ export const useApiOnMount = (apiFunction, dependencies = []) => {
 
   useEffect(() => {
     if (apiFunction) {
-      execute();
+      // Catch any unhandled promise rejections from execute
+      execute().catch(err => {
+        // Error is already handled in the execute function
+        // This catch is just to prevent unhandled promise rejection
+        console.warn('API call error in useApiOnMount:', err.message);
+      });
     }
     // Only run on mount, not when apiFunction changes to prevent infinite loops
     // eslint-disable-next-line react-hooks/exhaustive-deps

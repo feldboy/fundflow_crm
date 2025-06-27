@@ -1,7 +1,11 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Query
+from fastapi.responses import StreamingResponse
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
+import csv
+import io
+import json
 
 from app.core.database import get_database
 from app.models.plaintiff import PlaintiffCreate, PlaintiffUpdate, PlaintiffResponse, WorkflowStage
@@ -147,10 +151,17 @@ async def get_plaintiff(plaintiff_id: str, db=Depends(get_database)):
 @router.put("/{plaintiff_id}", response_model=PlaintiffResponse)
 async def update_plaintiff(plaintiff_id: str, plaintiff_update: PlaintiffUpdate, db=Depends(get_database)):
     """Update a plaintiff"""
-    try:
-        object_id = ObjectId(plaintiff_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid plaintiff ID")
+    from app.core.database import use_mock_db
+    
+    # Handle both ObjectId and string IDs depending on database type
+    if use_mock_db:
+        query_id = {"_id": plaintiff_id}
+    else:
+        try:
+            object_id = ObjectId(plaintiff_id)
+            query_id = {"_id": object_id}
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid plaintiff ID")
     
     update_data = {k: v for k, v in plaintiff_update.dict().items() if v is not None}
     if not update_data:
@@ -159,26 +170,110 @@ async def update_plaintiff(plaintiff_id: str, plaintiff_update: PlaintiffUpdate,
     update_data["updatedAt"] = datetime.utcnow()
     
     result = await db.plaintiffs.update_one(
-        {"_id": object_id},
+        query_id,
         {"$set": update_data}
     )
     
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Plaintiff not found")
     
-    updated_plaintiff = await db.plaintiffs.find_one({"_id": object_id})
+    updated_plaintiff = await db.plaintiffs.find_one(query_id)
     updated_plaintiff = convert_objectid(updated_plaintiff)
     return PlaintiffResponse(**updated_plaintiff)
 
 @router.delete("/{plaintiff_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_plaintiff(plaintiff_id: str, db=Depends(get_database)):
     """Delete a plaintiff"""
-    try:
-        object_id = ObjectId(plaintiff_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid plaintiff ID")
+    from app.core.database import use_mock_db
     
-    result = await db.plaintiffs.delete_one({"_id": object_id})
+    # Handle both ObjectId and string IDs depending on database type
+    if use_mock_db:
+        query_id = {"_id": plaintiff_id}
+    else:
+        try:
+            object_id = ObjectId(plaintiff_id)
+            query_id = {"_id": object_id}
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid plaintiff ID")
+    
+    result = await db.plaintiffs.delete_one(query_id)
     
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Plaintiff not found")
+
+@router.get("/export")
+async def export_plaintiffs(
+    format: str = Query("csv", description="Export format: csv or json"),
+    status_filter: Optional[str] = None,
+    stage_filter: Optional[str] = None,
+    db=Depends(get_database)
+):
+    """Export plaintiffs data in CSV or JSON format"""
+    
+    # Build query filter
+    query = {}
+    if status_filter:
+        query["status"] = status_filter
+    if stage_filter:
+        query["workflowStage"] = stage_filter
+    
+    try:
+        # Get all plaintiffs matching the filter
+        cursor = db.plaintiffs.find(query)
+        plaintiffs = await cursor.to_list(length=None)
+        
+        # Convert ObjectIds and clean data
+        cleaned_plaintiffs = []
+        for plaintiff in plaintiffs:
+            clean_plaintiff = convert_objectid(plaintiff)
+            # Remove sensitive or complex fields for export
+            export_plaintiff = {
+                "id": clean_plaintiff.get("_id", ""),
+                "firstName": clean_plaintiff.get("firstName", ""),
+                "lastName": clean_plaintiff.get("lastName", ""),
+                "email": clean_plaintiff.get("email", ""),
+                "phone": clean_plaintiff.get("phone", ""),
+                "address": clean_plaintiff.get("address", ""),
+                "caseType": clean_plaintiff.get("caseType", ""),
+                "incidentDate": clean_plaintiff.get("incidentDate", ""),
+                "requestedAmount": clean_plaintiff.get("requestedAmount", ""),
+                "status": clean_plaintiff.get("status", ""),
+                "workflowStage": clean_plaintiff.get("workflowStage", ""),
+                "lawFirmName": clean_plaintiff.get("lawFirmName", ""),
+                "createdAt": clean_plaintiff.get("createdAt", ""),
+                "updatedAt": clean_plaintiff.get("updatedAt", "")
+            }
+            cleaned_plaintiffs.append(export_plaintiff)
+        
+        if format.lower() == "json":
+            # Return JSON
+            json_str = json.dumps(cleaned_plaintiffs, indent=2, default=str)
+            return StreamingResponse(
+                io.BytesIO(json_str.encode()),
+                media_type="application/json",
+                headers={"Content-Disposition": f"attachment; filename=plaintiffs_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"}
+            )
+        
+        else:
+            # Return CSV (default)
+            output = io.StringIO()
+            if cleaned_plaintiffs:
+                writer = csv.DictWriter(output, fieldnames=cleaned_plaintiffs[0].keys())
+                writer.writeheader()
+                writer.writerows(cleaned_plaintiffs)
+            
+            csv_content = output.getvalue()
+            output.close()
+            
+            return StreamingResponse(
+                io.BytesIO(csv_content.encode()),
+                media_type="text/csv",
+                headers={"Content-Disposition": f"attachment; filename=plaintiffs_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"}
+            )
+            
+    except Exception as e:
+        print(f"Export error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to export data: {str(e)}"
+        )
