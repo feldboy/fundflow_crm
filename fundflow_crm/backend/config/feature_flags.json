@@ -1,0 +1,22 @@
+{
+  "ai_risk_assessment": true,
+  "case_management_v2": false,
+  "real_time_notifications": true,
+  "document_ocr": true,
+  "automated_contract_generation": false,
+  "advanced_analytics": true,
+  "multi_tenant_support": false,
+  "integration_webhooks": true,
+  "mobile_app_support": false,
+  "beta_ui_components": false,
+  "enhanced_search": true,
+  "bulk_operations": true,
+  "audit_logging": true,
+  "data_export": true,
+  "custom_workflows": false,
+  "ai_chat_assistant": true,
+  "document_collaboration": false,
+  "advanced_reporting": true,
+  "sso_integration": false,
+  "api_versioning": true
+}

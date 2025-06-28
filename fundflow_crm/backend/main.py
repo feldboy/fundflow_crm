@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import asyncio
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -10,7 +11,8 @@ from dotenv import load_dotenv
 
 from app.core.database import init_database, close_database, get_database_status, get_database
 from app.core.mongo_setup import initialize_collections, seed_sample_data, check_database_health
-from app.api import plaintiffs, law_firms, employees, communications, documents, ai_agents, google
+from app.core.config import settings, refresh_config_task
+from app.api import plaintiffs, law_firms, employees, communications, documents, ai_agents, google, config
 from app.core.auth import verify_token
 
 # Load environment variables
@@ -23,8 +25,24 @@ async def lifespan(app: FastAPI):
     # Startup
     await init_database()
     await initialize_collections()
+    
+    # Initialize remote configuration
+    try:
+        await settings.initialize_remote_config()
+    except Exception as e:
+        print(f"Warning: Remote config initialization failed: {e}")
+    
+    # Start background config refresh task
+    config_task = asyncio.create_task(refresh_config_task())
+    
     yield
+    
     # Shutdown
+    config_task.cancel()
+    try:
+        await config_task
+    except asyncio.CancelledError:
+        pass
     await close_database()
 
 app = FastAPI(
@@ -34,7 +52,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# CORS middleware - will be updated from remote config during startup
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:4028").split(",")
 app.add_middleware(
     CORSMiddleware,
@@ -125,6 +143,7 @@ app.include_router(communications.router, prefix="/api/v1/communications", tags=
 app.include_router(documents.router, prefix="/api/v1/documents", tags=["documents"])
 app.include_router(ai_agents.router, prefix="/api/v1/ai", tags=["ai-agents"])
 app.include_router(google.router, prefix="/api/v1/google", tags=["google-services"])
+app.include_router(config.router, prefix="/api/v1/config", tags=["configuration"])
 
 if __name__ == "__main__":
     uvicorn.run(

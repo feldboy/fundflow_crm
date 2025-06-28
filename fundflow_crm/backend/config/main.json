@@ -1,0 +1,47 @@
+{
+  "database": {
+    "url": "mongodb://localhost:27017",
+    "name": "fundflow_crm_local",
+    "timeout": 30,
+    "pool_size": 10,
+    "retry_writes": true,
+    "max_idle_time": 60
+  },
+  "cors": {
+    "allowed_origins": [
+      "http://localhost:3000",
+      "http://localhost:4028",
+      "https://fundflow-crm.vercel.app"
+    ],
+    "allow_credentials": true,
+    "max_age": 86400
+  },
+  "rate_limits": {
+    "requests_per_minute": 100,
+    "burst_limit": 20,
+    "daily_limit": 50000,
+    "ai_requests_per_hour": 200
+  },
+  "security": {
+    "token_expiry_minutes": 30,
+    "refresh_token_expiry_days": 7,
+    "password_min_length": 8,
+    "max_login_attempts": 5,
+    "lockout_duration_minutes": 15
+  },
+  "logging": {
+    "level": "INFO",
+    "max_file_size": "10MB",
+    "backup_count": 5,
+    "enable_access_logs": true
+  },
+  "monitoring": {
+    "enable_metrics": true,
+    "health_check_interval": 60,
+    "alert_thresholds": {
+      "response_time_ms": 1000,
+      "error_rate_percent": 5,
+      "memory_usage_percent": 85
+    }
+  }
+}

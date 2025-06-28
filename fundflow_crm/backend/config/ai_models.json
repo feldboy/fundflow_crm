@@ -1,0 +1,68 @@
+{
+  "gemini": {
+    "model": "gemini-1.5-flash",
+    "max_tokens": 8192,
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 40,
+    "safety_settings": {
+      "harassment": "BLOCK_MEDIUM_AND_ABOVE",
+      "hate_speech": "BLOCK_MEDIUM_AND_ABOVE",
+      "sexually_explicit": "BLOCK_MEDIUM_AND_ABOVE",
+      "dangerous_content": "BLOCK_MEDIUM_AND_ABOVE"
+    },
+    "generation_config": {
+      "candidate_count": 1,
+      "stop_sequences": ["END", "STOP"]
+    }
+  },
+  "risk_assessment": {
+    "model": "gemini-1.5-pro",
+    "max_tokens": 4096,
+    "temperature": 0.3,
+    "analysis_depth": "comprehensive",
+    "include_financial_metrics": true,
+    "include_legal_precedents": true
+  },
+  "contract_generation": {
+    "model": "gemini-1.5-flash",
+    "max_tokens": 8192,
+    "temperature": 0.2,
+    "template_engine": "jinja2",
+    "auto_populate_fields": true,
+    "legal_review_required": true
+  },
+  "document_analysis": {
+    "model": "gemini-1.5-pro",
+    "max_tokens": 8192,
+    "temperature": 0.1,
+    "extract_entities": true,
+    "summarize_content": true,
+    "detect_anomalies": true
+  },
+  "chat_assistant": {
+    "model": "gemini-1.5-flash",
+    "max_tokens": 2048,
+    "temperature": 0.8,
+    "personality": "professional_helpful",
+    "context_window": 10,
+    "enable_memory": true
+  },
+  "general": {
+    "rate_limits": {
+      "requests_per_minute": 60,
+      "requests_per_hour": 1000,
+      "tokens_per_day": 1000000
+    },
+    "retry_config": {
+      "max_retries": 3,
+      "backoff_factor": 2,
+      "timeout_seconds": 30
+    },
+    "monitoring": {
+      "log_requests": true,
+      "track_usage": true,
+      "alert_on_errors": true
+    }
+  }
+}
