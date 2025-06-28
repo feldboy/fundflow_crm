@@ -12,6 +12,7 @@ import CaseStatusSummary from './components/CaseStatusSummary';
 import DatabaseStatus from '../../components/DatabaseStatus';
 import EnvDebug from '../../components/EnvDebug';
 import CORSTestComponent from '../../components/CORSTestComponent';
+import APIDebugComponent from '../../components/APIDebugComponent';
 import { plaintiffService, communicationService } from '../../services';
 import { useApiOnMount } from '../../hooks/useApi';
 
@@ -157,6 +158,7 @@ const Dashboard = () => {
 
             {/* Right Sidebar */}
             <div className="xl:col-span-3 order-3 space-y-6">
+              <APIDebugComponent />
               <EnvDebug />
               <DatabaseStatus />
               {/* CORS Test Component - Development Tool */}
