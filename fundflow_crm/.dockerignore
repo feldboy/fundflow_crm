@@ -1,0 +1,61 @@
+# Version control
+.git
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.production
+backend/.env
+backend/.env.local
+backend/.env.production
+
+# Dependencies
+backend/venv/
+backend_venv/
+node_modules/
+**/node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+backend/config_cache/
+
+# Testing
+coverage/
+.coverage
+.pytest_cache/
+.tox/
+
+# Documentation
+README.md
+*.md
+docs/
+
+# Frontend files (not needed for backend build)
+src/
+public/
+package.json
+package-lock.json
+vite.config.mjs
+tailwind.config.js
+postcss.config.js
+jsconfig.json
