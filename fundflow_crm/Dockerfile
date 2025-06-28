@@ -20,9 +20,3 @@ EXPOSE 8000
 
 # Start the application
 CMD ["./start.sh"]
-
-# Expose port
-EXPOSE 8000
-
-# Start the application
-CMD ["/app/start.sh"]
