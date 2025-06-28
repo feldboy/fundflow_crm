@@ -5,9 +5,11 @@ import tagger from "@dhiwise/component-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // Using build directory (Vercel configured to use this)
+  // Force output to dist directory for Vercel compatibility
   build: {
-    outDir: "build",
+    outDir: "dist",
+    emptyOutDir: true,
+    assetsDir: "assets",
     chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: {
