@@ -35,12 +35,10 @@ app = FastAPI(
 )
 
 # CORS middleware
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:4028").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        os.getenv("FRONTEND_URL", "http://localhost:3000"),
-        "http://localhost:4028"  # Vite dev server default port
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,11 +46,6 @@ app.add_middleware(
 
 # Security
 security = HTTPBearer()
-
-# Root endpoint
-@app.get("/")
-async def root():
-    return {"message": "Pre-Settlement Funding CRM API", "version": "1.0.0"}
 
 # Health check
 @app.get("/health")
@@ -63,13 +56,19 @@ async def health_check():
         return {
             "status": "healthy",
             "database": db_status,
-            "timestamp": "2025-06-27"
+            "timestamp": "2025-06-27",
+            "service": "fundflow-crm-backend"
         }
     except Exception as e:
         return JSONResponse(
             status_code=503,
             content={"status": "unhealthy", "error": str(e)}
         )
+
+# Root endpoint
+@app.get("/")
+async def root():
+    return {"message": "Pre-Settlement Funding CRM API", "version": "1.0.0"}
 
 # Database status endpoint
 @app.get("/api/v1/database/status")
