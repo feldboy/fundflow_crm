@@ -92,21 +92,8 @@ security = HTTPBearer()
 # Health check
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for deployment platforms"""
-    try:
-        # Basic health check - don't depend on database for Railway health checks
-        return {
-            "status": "healthy",
-            "timestamp": "2025-06-28",
-            "service": "fundflow-crm-backend",
-            "port": os.getenv("PORT", "8000"),
-            "environment": os.getenv("RAILWAY_ENVIRONMENT", "development")
-        }
-    except Exception as e:
-        return JSONResponse(
-            status_code=503,
-            content={"status": "unhealthy", "error": str(e)}
-        )
+    """Minimal health check endpoint for Railway deployment"""
+    return {"status": "healthy", "service": "fundflow-crm-backend"}
 
 # Detailed health check that includes database
 @app.get("/health/detailed")
