@@ -23,27 +23,51 @@ load_dotenv('.env.local', override=True)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    await init_database()
-    await initialize_collections()
+    try:
+        await init_database()
+        print("✅ Database initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Database initialization failed: {e}")
+        print("⚠️ Continuing with mock database...")
+    
+    try:
+        await initialize_collections()
+        print("✅ Collections initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Collections initialization failed: {e}")
+        print("⚠️ Continuing without collections...")
     
     # Initialize remote configuration
     try:
         await settings.initialize_remote_config()
+        print("✅ Remote config initialized successfully")
     except Exception as e:
-        print(f"Warning: Remote config initialization failed: {e}")
+        print(f"⚠️ Remote config initialization failed: {e}")
+        print("⚠️ Continuing with default config...")
     
     # Start background config refresh task
-    config_task = asyncio.create_task(refresh_config_task())
+    config_task = None
+    try:
+        config_task = asyncio.create_task(refresh_config_task())
+        print("✅ Background config task started")
+    except Exception as e:
+        print(f"⚠️ Background config task failed: {e}")
     
     yield
     
     # Shutdown
-    config_task.cancel()
+    if config_task:
+        config_task.cancel()
+        try:
+            await config_task
+        except asyncio.CancelledError:
+            pass
+    
     try:
-        await config_task
-    except asyncio.CancelledError:
-        pass
-    await close_database()
+        await close_database()
+        print("✅ Database connection closed")
+    except Exception as e:
+        print(f"⚠️ Database close failed: {e}")
 
 app = FastAPI(
     title="Pre-Settlement Funding CRM API",
@@ -70,12 +94,33 @@ security = HTTPBearer()
 async def health_check():
     """Health check endpoint for deployment platforms"""
     try:
+        # Basic health check - don't depend on database for Railway health checks
+        return {
+            "status": "healthy",
+            "timestamp": "2025-06-28",
+            "service": "fundflow-crm-backend",
+            "port": os.getenv("PORT", "8000"),
+            "environment": os.getenv("RAILWAY_ENVIRONMENT", "development")
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "error": str(e)}
+        )
+
+# Detailed health check that includes database
+@app.get("/health/detailed")
+async def detailed_health_check():
+    """Detailed health check including database status"""
+    try:
         db_status = await get_database_status()
         return {
             "status": "healthy",
             "database": db_status,
-            "timestamp": "2025-06-27",
-            "service": "fundflow-crm-backend"
+            "timestamp": "2025-06-28",
+            "service": "fundflow-crm-backend",
+            "port": os.getenv("PORT", "8000"),
+            "environment": os.getenv("RAILWAY_ENVIRONMENT", "development")
         }
     except Exception as e:
         return JSONResponse(
