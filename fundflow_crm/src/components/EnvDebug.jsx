@@ -1,5 +1,16 @@
 import React from 'react';
 
+// Determine the correct API base URL (same logic as api.js)
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  if (import.meta.env.PROD) {
+    return 'https://fundflowcrm-production.up.railway.app';
+  }
+  return 'http://localhost:8000';
+};
+
 const EnvDebug = () => {
   const envVars = {
     VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
@@ -17,7 +28,7 @@ const EnvDebug = () => {
         {JSON.stringify(envVars, null, 2)}
       </pre>
       <div className="mt-2 text-sm">
-        <p><strong>Expected API URL:</strong> {`${envVars.VITE_API_BASE_URL || 'http://localhost:8000'}/api/${envVars.VITE_API_VERSION || 'v1'}`}</p>
+        <p><strong>Expected API URL:</strong> {`${getApiBaseUrl()}/api/${envVars.VITE_API_VERSION || 'v1'}`}</p>
       </div>
     </div>
   );

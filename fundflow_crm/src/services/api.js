@@ -1,8 +1,24 @@
 import axios from 'axios';
 
+// Determine the correct API base URL
+const getApiBaseUrl = () => {
+  // Use environment variable if available
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // Production fallback
+  if (import.meta.env.PROD) {
+    return 'https://fundflowcrm-production.up.railway.app';
+  }
+  
+  // Development fallback
+  return 'http://localhost:8000';
+};
+
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/${import.meta.env.VITE_API_VERSION || 'v1'}`,
+  baseURL: `${getApiBaseUrl()}/api/${import.meta.env.VITE_API_VERSION || 'v1'}`,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -51,7 +67,7 @@ export default apiClient;
 // Health check function
 export const healthCheck = async () => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/health`);
+    const response = await axios.get(`${getApiBaseUrl()}/health`);
     return response.data;
   } catch (error) {
     throw new Error('Backend connection failed');
@@ -61,7 +77,7 @@ export const healthCheck = async () => {
 // Test API connection
 export const testConnection = async () => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/`);
+    const response = await axios.get(`${getApiBaseUrl()}/`);
     return response.data;
   } catch (error) {
     throw new Error('API connection test failed');

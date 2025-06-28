@@ -11,6 +11,7 @@ import QuickActions from './components/QuickActions';
 import CaseStatusSummary from './components/CaseStatusSummary';
 import DatabaseStatus from '../../components/DatabaseStatus';
 import EnvDebug from '../../components/EnvDebug';
+import CORSTestComponent from '../../components/CORSTestComponent';
 import { plaintiffService, communicationService } from '../../services';
 import { useApiOnMount } from '../../hooks/useApi';
 
@@ -158,6 +159,13 @@ const Dashboard = () => {
             <div className="xl:col-span-3 order-3 space-y-6">
               <EnvDebug />
               <DatabaseStatus />
+              {/* CORS Test Component - Development Tool */}
+              {import.meta.env.DEV && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-yellow-800 mb-2">🧪 Development Tools</h3>
+                  <CORSTestComponent />
+                </div>
+              )}
               <QuickActions />
               <UrgentTasks />
               <RecentActivity data={recentCommunications} />
