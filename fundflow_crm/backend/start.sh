@@ -9,6 +9,10 @@ echo "Current directory: $(pwd)"
 echo "Files in directory:"
 ls -la
 
+# Set default environment variables if not set
+export ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-https://fundflow-crm.vercel.app,https://fundflow-f48671lhy-yarons-projects-601a79ac.vercel.app}"
+echo "ALLOWED_ORIGINS: $ALLOWED_ORIGINS"
+
 # Test if main.py exists
 if [ ! -f "main.py" ]; then
     echo "ERROR: main.py not found!"
@@ -20,6 +24,9 @@ python -c "import sys; print('Python executable:', sys.executable)"
 
 echo "=== Testing FastAPI import ==="
 python -c "import fastapi; print('FastAPI version:', fastapi.__version__)"
+
+echo "=== Testing main.py import ==="
+python -c "import main; print('main.py imports successfully')"
 
 echo "=== Starting uvicorn server ==="
 exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info --access-log
