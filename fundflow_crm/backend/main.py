@@ -79,6 +79,7 @@ app = FastAPI(
 # CORS middleware - Robust configuration that ensures production domains are always allowed
 REQUIRED_ORIGINS = [
     "https://fundflow-crm.vercel.app",  # Our production frontend
+    "https://fundflow-f48671lhy-yarons-projects-601a79ac.vercel.app",  # Current deployment URL
     "http://localhost:3000",           # Local development
     "http://localhost:4028"            # Local development alternate port
 ]
