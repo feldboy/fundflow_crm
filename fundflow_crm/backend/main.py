@@ -76,11 +76,26 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware - will be updated from remote config during startup
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:4028").split(",")
+# CORS middleware - Robust configuration that ensures production domains are always allowed
+REQUIRED_ORIGINS = [
+    "https://fundflow-crm.vercel.app",  # Our production frontend
+    "http://localhost:3000",           # Local development
+    "http://localhost:4028"            # Local development alternate port
+]
+
+# Get origins from environment
+env_origins = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else []
+env_origins = [origin.strip() for origin in env_origins if origin.strip()]
+
+# Combine required origins with environment origins, removing duplicates
+all_origins = REQUIRED_ORIGINS + [origin for origin in env_origins if origin not in REQUIRED_ORIGINS]
+
+print(f"🌐 Environment ALLOWED_ORIGINS: {os.getenv('ALLOWED_ORIGINS', 'Not set')}")
+print(f"🌐 Final CORS allowed origins: {all_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=all_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -119,6 +134,17 @@ async def detailed_health_check():
 @app.get("/")
 async def root():
     return {"message": "Pre-Settlement Funding CRM API", "version": "1.0.0"}
+
+# CORS debug endpoint
+@app.get("/cors-info")
+async def cors_info():
+    """Debug endpoint to check CORS configuration"""
+    return {
+        "allowed_origins": all_origins,
+        "cors_enabled": True,
+        "environment": os.getenv("RAILWAY_ENVIRONMENT", "development"),
+        "environment_origins": os.getenv("ALLOWED_ORIGINS", "Not set")
+    }
 
 # Database status endpoint
 @app.get("/api/v1/database/status")

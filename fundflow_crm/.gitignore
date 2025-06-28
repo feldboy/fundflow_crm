@@ -26,3 +26,4 @@ __pycache__/
 *.so
 .coverage
 .pytest_cache/
+.vercel
