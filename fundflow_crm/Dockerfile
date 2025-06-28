@@ -15,15 +15,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy only backend application code
 COPY backend/ .
 
-# Make startup script executable
-RUN chmod +x start.sh
+# Debug: List files to see what was copied
+RUN echo "Files in /app:" && ls -la
 
-# Create a non-root user
-RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
-USER app
+# Make startup script executable if it exists
+RUN chmod +x start.sh || echo "start.sh not found, will use direct uvicorn"
 
-# Expose port (Railway sets this automatically)
+# Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["./start.sh"]
+# Run the application with PORT environment variable support
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info"]
