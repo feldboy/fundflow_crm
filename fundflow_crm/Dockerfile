@@ -6,11 +6,11 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y gcc curl && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install dependencies
-COPY backend/requirements.txt .
+COPY ./backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend code
-COPY backend/ .
+COPY ./backend/ .
 
 # Create a simple startup script
 RUN echo '#!/bin/bash\n\
