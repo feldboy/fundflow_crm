@@ -158,8 +158,13 @@ const Dashboard = () => {
 
             {/* Right Sidebar */}
             <div className="xl:col-span-3 order-3 space-y-6">
-              <APIDebugComponent />
-              <EnvDebug />
+              {/* Debug components - Development only */}
+              {import.meta.env.DEV && (
+                <>
+                  <APIDebugComponent />
+                  <EnvDebug />
+                </>
+              )}
               <DatabaseStatus />
               {/* CORS Test Component - Development Tool */}
               {import.meta.env.DEV && (
