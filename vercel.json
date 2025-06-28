@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd fundflow_crm && npm run build",
+  "outputDirectory": "fundflow_crm/dist",
+  "installCommand": "cd fundflow_crm && npm install",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

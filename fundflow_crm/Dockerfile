@@ -18,7 +18,7 @@ echo "Starting FastAPI server..."\n\
 echo "PORT: ${PORT:-8000}"\n\
 echo "Working directory: $(pwd)"\n\
 echo "Files: $(ls -la | head -5)"\n\
-exec python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info\n' > start.sh && chmod +x start.sh
+exec python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info --no-reload\n' > start.sh && chmod +x start.sh
 
 # Expose port
 EXPOSE 8000

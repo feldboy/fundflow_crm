@@ -27,8 +27,7 @@
   },
   "scripts": {
     "start": "vite",
-    "build": "vite build --outDir dist --sourcemap",
-    "build:vercel": "vite build --outDir dist --sourcemap --emptyOutDir",
+    "build": "vite build --outDir dist --sourcemap --emptyOutDir",
     "serve": "vite preview",
     "test": "vitest",
     "test:watch": "vitest --watch",
