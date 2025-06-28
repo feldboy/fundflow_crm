@@ -26,7 +26,16 @@ echo "=== Testing FastAPI import ==="
 python -c "import fastapi; print('FastAPI version:', fastapi.__version__)"
 
 echo "=== Testing main.py import ==="
-python -c "import main; print('main.py imports successfully')"
+python -c "import main; print('main.py imports successfully')" || {
+    echo "main.py import failed, trying simple version..."
+    if [ -f "main_simple.py" ]; then
+        echo "Using main_simple.py for testing..."
+        exec uvicorn main_simple:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info --access-log
+    else
+        echo "ERROR: Neither main.py nor main_simple.py could be imported!"
+        exit 1
+    fi
+}
 
 echo "=== Starting uvicorn server ==="
 exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info --access-log
