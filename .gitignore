@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Python virtual environments
 backend_venv/
 venv/
@@ -124,3 +125,13 @@ jspm_packages/
 # Build outputs
 dist/
 build/
+=======
+.DS_Store
+node_modules
+.idea
+package-lock.json
+/build
+.vscode/
+.idea/
+vite.config.*s.*
+>>>>>>> e918c62c15aab51aaa14083e245da56483b50859
