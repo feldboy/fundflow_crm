@@ -1,8 +1,5 @@
 import axios from 'axios';
 
-// Debugging: Log the environment variable to check its value
-console.log("VITE_API_BASE_URL from env:", import.meta.env.VITE_API_BASE_URL);
-
 // Create axios instance with base configuration
 const apiClient = axios.create({
   baseURL: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/${import.meta.env.VITE_API_VERSION || 'v1'}`,
