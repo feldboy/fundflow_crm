@@ -9,16 +9,11 @@ RUN apt-get update && apt-get install -y gcc curl && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code
+# Copy application code
 COPY . .
 
-# Create a simple startup script
-RUN echo '#!/bin/bash\n\
-echo "Starting FastAPI server..."\n\
-echo "PORT: ${PORT:-8000}"\n\
-echo "Working directory: $(pwd)"\n\
-echo "Files: $(ls -la | head -5)"\n\
-exec python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info --no-reload\n' > start.sh && chmod +x start.sh
+# Make start script executable
+RUN chmod +x start.sh
 
 # Expose port
 EXPOSE 8000
