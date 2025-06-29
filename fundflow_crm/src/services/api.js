@@ -5,7 +5,7 @@ const PRODUCTION_API_URL = 'https://fundflowcrm-production.up.railway.app';
 
 // Determine the correct API base URL with aggressive HTTPS enforcement
 const getApiBaseUrl = () => {
-  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  const envUrl = import.meta.env.VITE_API_BASE_URL.replace(/^http:\/\//, 'https://'); // Ensure HTTPS
   const isProd = import.meta.env.PROD;
   const mode = import.meta.env.MODE;
   const isVercel = typeof window !== 'undefined' && window.location.hostname === 'fundflow-crm.vercel.app';
@@ -22,28 +22,13 @@ const getApiBaseUrl = () => {
     isHttps
   });
   
-  // AGGRESSIVE HTTPS ENFORCEMENT - Multiple conditions
+  // Aggressive HTTPS enforcement
   if (isVercel || isHttps || isProd || mode === 'production' || envUrl?.includes('vercel.app')) {
-    console.log('🔒 ENFORCING HTTPS - Production detected:', PRODUCTION_API_URL);
-    return PRODUCTION_API_URL;
+    console.log('🔒 ENFORCING HTTPS - Production detected:', envUrl);
+    return envUrl;
   }
   
-  // Only use environment URL if it's HTTPS or localhost
-  if (envUrl) {
-    if (envUrl.startsWith('https://') || envUrl.includes('localhost')) {
-      console.log('✅ Using environment URL:', envUrl);
-      return envUrl;
-    } else {
-      // Convert HTTP to HTTPS for production URLs
-      const httpsUrl = envUrl.replace('http://', 'https://');
-      console.log('� Converting HTTP to HTTPS:', httpsUrl);
-      return httpsUrl;
-    }
-  }
-  
-  // Final fallback - always HTTPS for production
-  console.log('🚨 Using final HTTPS fallback:', PRODUCTION_API_URL);
-  return PRODUCTION_API_URL;
+  return envUrl;
 };
 
 // Get the base URL and log it
