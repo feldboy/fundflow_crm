@@ -6,6 +6,8 @@ export const useApi = (apiFunction, dependencies = []) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const enforceHttps = (url) => url.replace(/^http:\/\//, 'https://');
+
   const execute = useCallback(async (...args) => {
     if (!apiFunction) {
       return;
@@ -13,7 +15,15 @@ export const useApi = (apiFunction, dependencies = []) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiFunction(...args);
+
+      // Enforce HTTPS for the API function
+      const result = await apiFunction(...args.map(arg => {
+        if (typeof arg === 'string' && arg.startsWith('http://')) {
+          return enforceHttps(arg);
+        }
+        return arg;
+      }));
+
       setData(result);
       return result;
     } catch (err) {
