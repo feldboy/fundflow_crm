@@ -1,45 +1,49 @@
 import axios from 'axios';
 
-// Determine the correct API base URL with debugging
+// PRODUCTION HTTPS ENFORCEMENT
+const PRODUCTION_API_URL = 'https://fundflowcrm-production.up.railway.app';
+
+// Determine the correct API base URL with aggressive HTTPS enforcement
 const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
   const isProd = import.meta.env.PROD;
   const mode = import.meta.env.MODE;
-  const isVercel = window.location.hostname === 'fundflow-crm.vercel.app';
+  const isVercel = typeof window !== 'undefined' && window.location.hostname === 'fundflow-crm.vercel.app';
+  const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
   
   // Log for debugging
   console.log('🔍 API URL Debug:', {
     VITE_API_BASE_URL: envUrl,
     PROD: isProd,
     MODE: mode,
-    hostname: window.location.hostname,
-    isVercel
+    hostname: typeof window !== 'undefined' ? window.location.hostname : 'SSR',
+    protocol: typeof window !== 'undefined' ? window.location.protocol : 'SSR',
+    isVercel,
+    isHttps
   });
   
-  // Force HTTPS if on Vercel production
-  if (isVercel || window.location.protocol === 'https:') {
-    const prodUrl = 'https://fundflowcrm-production.up.railway.app';
-    console.log('🔒 Forcing HTTPS for production:', prodUrl);
-    return prodUrl;
+  // AGGRESSIVE HTTPS ENFORCEMENT - Multiple conditions
+  if (isVercel || isHttps || isProd || mode === 'production' || envUrl?.includes('vercel.app')) {
+    console.log('🔒 ENFORCING HTTPS - Production detected:', PRODUCTION_API_URL);
+    return PRODUCTION_API_URL;
   }
   
-  // Use environment variable if available and not overridden
-  if (envUrl && !isVercel) {
-    console.log('✅ Using environment URL:', envUrl);
-    return envUrl;
+  // Only use environment URL if it's HTTPS or localhost
+  if (envUrl) {
+    if (envUrl.startsWith('https://') || envUrl.includes('localhost')) {
+      console.log('✅ Using environment URL:', envUrl);
+      return envUrl;
+    } else {
+      // Convert HTTP to HTTPS for production URLs
+      const httpsUrl = envUrl.replace('http://', 'https://');
+      console.log('� Converting HTTP to HTTPS:', httpsUrl);
+      return httpsUrl;
+    }
   }
   
-  // Production fallback - force HTTPS
-  if (isProd || mode === 'production') {
-    const prodUrl = 'https://fundflowcrm-production.up.railway.app';
-    console.log('🔧 Using production fallback:', prodUrl);
-    return prodUrl;
-  }
-  
-  // Development fallback
-  const devUrl = 'http://localhost:8000';
-  console.log('🏠 Using development fallback:', devUrl);
-  return devUrl;
+  // Final fallback - always HTTPS for production
+  console.log('🚨 Using final HTTPS fallback:', PRODUCTION_API_URL);
+  return PRODUCTION_API_URL;
 };
 
 // Get the base URL and log it
@@ -47,11 +51,20 @@ const API_BASE_URL = getApiBaseUrl();
 const API_VERSION = import.meta.env.VITE_API_VERSION || 'v1';
 const FULL_API_URL = `${API_BASE_URL}/api/${API_VERSION}`;
 
-console.log('🚀 Final API URL:', FULL_API_URL);
+// Force HTTPS in the final URL as a safety net
+const SAFE_API_URL = FULL_API_URL.replace(/^http:\/\//, 'https://');
+
+console.log('🚀 Final API URL:', SAFE_API_URL);
+console.log('🔍 URL Breakdown:', {
+  baseUrl: API_BASE_URL,
+  version: API_VERSION,
+  fullUrl: FULL_API_URL,
+  safeUrl: SAFE_API_URL
+});
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: FULL_API_URL,
+  baseURL: SAFE_API_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -100,7 +113,8 @@ export default apiClient;
 // Health check function
 export const healthCheck = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/health`);
+    const safeBaseUrl = API_BASE_URL.replace(/^http:\/\//, 'https://');
+    const response = await axios.get(`${safeBaseUrl}/health`);
     return response.data;
   } catch (error) {
     throw new Error('Backend connection failed');
@@ -110,7 +124,8 @@ export const healthCheck = async () => {
 // Test API connection
 export const testConnection = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/`);
+    const safeBaseUrl = API_BASE_URL.replace(/^http:\/\//, 'https://');
+    const response = await axios.get(`${safeBaseUrl}/`);
     return response.data;
   } catch (error) {
     throw new Error('API connection test failed');
