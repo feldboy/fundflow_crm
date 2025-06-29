@@ -5,7 +5,7 @@ from typing import Optional
 from app.core.mock_database import mock_db  # noqa: E402
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # MongoDB connection
@@ -22,6 +22,8 @@ async def init_database():
     logger.info(f"Attempting to connect to MongoDB...")
     logger.info(f"Database name: {database_name}")
     logger.info(f"MongoDB URL configured: {'Yes' if mongodb_url else 'No'}")
+    logger.info(f"MONGODB_URL: {mongodb_url}")
+    logger.info(f"DATABASE_NAME: {database_name}")
     
     if not mongodb_url:
         logger.warning("MONGODB_URL not found in environment variables")

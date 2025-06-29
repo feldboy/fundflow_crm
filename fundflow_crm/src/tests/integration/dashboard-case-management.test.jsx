@@ -101,17 +101,18 @@ vi.mock('../../pages/case-management/components/BulkActionsModal', () => ({
 
 // Mock hooks
 vi.mock('../../hooks/useApi', () => ({
-  useApiOnMount: vi.fn((callback) => ({
-    data: {
-      total: 100,
-      active: 75,
-      pending: 15,
-      completed: 10
-    },
+  useApi: () => ({
+    data: null,
     loading: false,
     error: null,
-    refetch: vi.fn(),
-  })),
+    execute: vi.fn(),
+  }),
+  useApiOnMount: () => ({
+    data: { key: 'mockData' }, // Simulate successful API response
+    loading: false,
+    error: null,
+    execute: vi.fn(),
+  }),
 }));
 
 // MSW server setup for API mocking
