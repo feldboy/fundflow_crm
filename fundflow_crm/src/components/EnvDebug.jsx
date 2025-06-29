@@ -3,12 +3,12 @@ import React from 'react';
 // Determine the correct API base URL (same logic as api.js)
 const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
+    return import.meta.env.VITE_API_BASE_URL.replace(/^http:\/\//, 'https://'); // Ensure HTTPS
   }
   if (import.meta.env.PROD) {
     return 'https://fundflowcrm-production.up.railway.app';
   }
-  return 'http://localhost:8000';
+  return 'https://localhost:8000'; // Default to HTTPS
 };
 
 const EnvDebug = () => {
