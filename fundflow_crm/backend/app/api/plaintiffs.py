@@ -323,3 +323,32 @@ async def test_plaintiff_validation(db=Depends(get_database)):
             return {"error": "No plaintiffs found"}
     except Exception as e:
         return {"error": str(e), "type": type(e).__name__}
+
+@router.get("/debug/list")
+async def test_plaintiff_list(db=Depends(get_database)):
+    """Debug endpoint to test list processing"""
+    try:
+        cursor = db.plaintiffs.find({}).limit(2)
+        plaintiffs = await cursor.to_list(length=2)
+        
+        results = []
+        for i, plaintiff in enumerate(plaintiffs):
+            try:
+                converted = convert_objectid(plaintiff)
+                plaintiff_response = PlaintiffResponse(**converted)
+                results.append({
+                    "index": i,
+                    "success": True,
+                    "data": plaintiff_response.dict()
+                })
+            except Exception as e:
+                results.append({
+                    "index": i,
+                    "success": False,
+                    "error": str(e),
+                    "raw_data": convert_objectid(plaintiff)
+                })
+        
+        return {"results": results}
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
