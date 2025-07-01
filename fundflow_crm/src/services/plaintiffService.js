@@ -10,25 +10,48 @@ export const plaintiffService = {
       : {};
     
     console.log('🔍 Attempting to fetch plaintiffs with filters:', cleanFilters);
+    
+    // NUCLEAR OPTION: Use native fetch with forced HTTPS to bypass axios issues
     try {
-      // First try the main endpoint
-      const response = await apiClient.get('/plaintiffs', { params: cleanFilters });
-      console.log('✅ Successfully fetched plaintiffs:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('❌ Failed to fetch plaintiffs from /plaintiffs:', error);
+      const baseUrl = 'https://fundflowcrm-production.up.railway.app/api/v1';
+      const queryParams = new URLSearchParams(cleanFilters).toString();
+      const url = `${baseUrl}/plaintiffs${queryParams ? '?' + queryParams : ''}`;
       
-      // Fallback: try with a different approach
+      console.log('🚀 Using native fetch with URL:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // Add auth token if available
+          ...(localStorage.getItem('authToken') && {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          })
+        },
+        mode: 'cors'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Native fetch successful:', data);
+      return data;
+      
+    } catch (fetchError) {
+      console.error('❌ Native fetch failed:', fetchError);
+      
+      // Fallback to axios as last resort
       try {
-        console.log('🔄 Trying fallback endpoint...');
-        const fallbackResponse = await apiClient.get('/plaintiffs', { 
-          params: { ...cleanFilters, limit: cleanFilters.limit || 100 }
-        });
-        console.log('✅ Fallback successful:', fallbackResponse.data);
-        return fallbackResponse.data;
-      } catch (fallbackError) {
-        console.error('❌ Fallback also failed:', fallbackError);
-        throw error; // Throw original error
+        console.log('🔄 Falling back to axios...');
+        const response = await apiClient.get('/plaintiffs', { params: cleanFilters });
+        console.log('✅ Axios fallback successful:', response.data);
+        return response.data;
+      } catch (axiosError) {
+        console.error('❌ Axios fallback also failed:', axiosError);
+        throw fetchError; // Throw original fetch error
       }
     }
   },
