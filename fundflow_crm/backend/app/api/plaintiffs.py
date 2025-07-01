@@ -26,6 +26,15 @@ def convert_objectid(item):
                     item[key] = datetime.fromisoformat(value + "T00:00:00") if value else None
                 except (ValueError, TypeError):
                     item[key] = None
+            elif key == "documents" and isinstance(value, list):
+                # Convert document objects to document IDs (strings)
+                # For compatibility with PlaintiffResponse model
+                item[key] = [str(doc.get("_id", f"doc_{i}")) if isinstance(doc, dict) else str(doc) 
+                           for i, doc in enumerate(value)]
+            elif key == "communicationHistory" and isinstance(value, list):
+                # Convert communication objects to communication IDs (strings) 
+                item[key] = [str(comm.get("_id", f"comm_{i}")) if isinstance(comm, dict) else str(comm)
+                           for i, comm in enumerate(value)]
             elif isinstance(value, dict):
                 convert_objectid(value)
             elif isinstance(value, list):
