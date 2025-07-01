@@ -4,10 +4,15 @@ import apiClient from './api.js';
 export const plaintiffService = {
   // Get all plaintiffs with optional filters
   getAll: async (filters = {}) => {
-    console.log('🔍 Attempting to fetch plaintiffs with filters:', filters);
+    // Protect against React event objects being passed as filters
+    const cleanFilters = filters && typeof filters === 'object' && !filters._reactName 
+      ? filters 
+      : {};
+    
+    console.log('🔍 Attempting to fetch plaintiffs with filters:', cleanFilters);
     try {
       // First try the main endpoint
-      const response = await apiClient.get('/plaintiffs', { params: filters });
+      const response = await apiClient.get('/plaintiffs', { params: cleanFilters });
       console.log('✅ Successfully fetched plaintiffs:', response.data);
       return response.data;
     } catch (error) {
@@ -17,7 +22,7 @@ export const plaintiffService = {
       try {
         console.log('🔄 Trying fallback endpoint...');
         const fallbackResponse = await apiClient.get('/plaintiffs', { 
-          params: { ...filters, limit: filters.limit || 100 }
+          params: { ...cleanFilters, limit: cleanFilters.limit || 100 }
         });
         console.log('✅ Fallback successful:', fallbackResponse.data);
         return fallbackResponse.data;

@@ -184,7 +184,7 @@ const CaseManagement = () => {
           <Icon name="exclamation-triangle" className="w-8 h-8 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 mb-2">Failed to load cases</p>
           <button 
-            onClick={fetchPlaintiffs}
+            onClick={() => fetchPlaintiffs()}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Retry

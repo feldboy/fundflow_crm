@@ -36,7 +36,7 @@ const apiClient = axios.create({
 // Request interceptor to add auth token and force HTTPS
 apiClient.interceptors.request.use(
   (config) => {
-    // Force HTTPS on ALL requests - multiple layers of protection
+    // ULTRA-AGGRESSIVE HTTPS ENFORCEMENT
     
     // 1. Force HTTPS in baseURL
     if (config.baseURL) {
@@ -48,16 +48,23 @@ apiClient.interceptors.request.use(
       config.url = config.url.replace(/^http:\/\//, 'https://');
     }
     
-    // 3. Construct full URL and ensure it's HTTPS
+    // 3. Validate and fix the full URL
     const fullUrl = config.baseURL + config.url;
     if (fullUrl.includes('http://')) {
-      console.warn('🚨 Blocking HTTP request, forcing HTTPS:', fullUrl);
-      const httpsUrl = fullUrl.replace(/^http:\/\//, 'https://');
+      console.warn('🚨 BLOCKING HTTP REQUEST - Converting to HTTPS:', fullUrl);
+      const httpsUrl = fullUrl.replace(/http:\/\/([^\/]+)/g, 'https://$1');
       
-      // Split back into baseURL and url
+      // Parse the corrected URL
       const urlObj = new URL(httpsUrl);
       config.baseURL = `${urlObj.protocol}//${urlObj.host}`;
       config.url = urlObj.pathname + urlObj.search + urlObj.hash;
+    }
+    
+    // 4. Final safety check - if anything still contains http://, reject the request
+    const finalUrl = config.baseURL + config.url;
+    if (finalUrl.includes('http://')) {
+      console.error('🛑 SECURITY BLOCK: Refusing to send HTTP request:', finalUrl);
+      throw new Error('HTTP requests are blocked for security reasons');
     }
     
     const token = localStorage.getItem('authToken');
@@ -65,7 +72,7 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    console.log('🔒 Final request URL:', config.baseURL + config.url);
+    console.log('🔒 Final request URL:', finalUrl);
     return config;
   },
   (error) => {
