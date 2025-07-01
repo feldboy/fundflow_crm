@@ -26,7 +26,7 @@ console.log('🔍 URL Breakdown:', {
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: SAFE_API_URL,
+  baseURL: 'https://fundflowcrm-production.up.railway.app/api/v1', // Hardcoded HTTPS URL
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -73,12 +73,25 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor for error handling and debugging
 apiClient.interceptors.response.use(
   (response) => {
+    console.log('✅ Successful HTTPS response from:', response.config.url);
     return response;
   },
   (error) => {
+    // Log detailed error information for debugging
+    if (error.config) {
+      console.error('❌ Request failed:', {
+        url: error.config.url,
+        baseURL: error.config.baseURL,
+        fullURL: error.config.baseURL + error.config.url,
+        method: error.config.method,
+        status: error.response?.status,
+        message: error.message
+      });
+    }
+    
     // Handle common errors
     if (error.response?.status === 401) {
       // Token expired or invalid
