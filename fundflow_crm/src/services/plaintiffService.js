@@ -4,8 +4,28 @@ import apiClient from './api.js';
 export const plaintiffService = {
   // Get all plaintiffs with optional filters
   getAll: async (filters = {}) => {
-    const response = await apiClient.get('/plaintiffs', { params: filters });
-    return response.data;
+    console.log('🔍 Attempting to fetch plaintiffs with filters:', filters);
+    try {
+      // First try the main endpoint
+      const response = await apiClient.get('/plaintiffs', { params: filters });
+      console.log('✅ Successfully fetched plaintiffs:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to fetch plaintiffs from /plaintiffs:', error);
+      
+      // Fallback: try with a different approach
+      try {
+        console.log('🔄 Trying fallback endpoint...');
+        const fallbackResponse = await apiClient.get('/plaintiffs', { 
+          params: { ...filters, limit: filters.limit || 100 }
+        });
+        console.log('✅ Fallback successful:', fallbackResponse.data);
+        return fallbackResponse.data;
+      } catch (fallbackError) {
+        console.error('❌ Fallback also failed:', fallbackError);
+        throw error; // Throw original error
+      }
+    }
   },
 
   // Get plaintiff by ID
