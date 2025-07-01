@@ -5,7 +5,7 @@ from typing import Optional
 from app.core.mock_database import mock_db  # noqa: E402
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # MongoDB connection
