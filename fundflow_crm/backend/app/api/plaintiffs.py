@@ -291,3 +291,26 @@ async def get_plaintiffs_raw(db=Depends(get_database)):
             return {"error": "No plaintiffs found"}
     except Exception as e:
         return {"error": str(e), "type": type(e).__name__}
+
+@router.get("/debug/validation")
+async def test_plaintiff_validation(db=Depends(get_database)):
+    """Debug endpoint to test PlaintiffResponse validation"""
+    try:
+        cursor = db.plaintiffs.find({}).limit(1)
+        plaintiffs = await cursor.to_list(length=1)
+        if plaintiffs:
+            raw_data = convert_objectid(plaintiffs[0])
+            try:
+                # Try to create PlaintiffResponse
+                plaintiff_response = PlaintiffResponse(**raw_data)
+                return {"success": True, "data": plaintiff_response.dict()}
+            except Exception as validation_error:
+                return {
+                    "success": False,
+                    "validation_error": str(validation_error),
+                    "raw_data": raw_data
+                }
+        else:
+            return {"error": "No plaintiffs found"}
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
