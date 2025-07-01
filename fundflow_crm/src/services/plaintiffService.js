@@ -15,7 +15,7 @@ export const plaintiffService = {
     try {
       const baseUrl = 'https://fundflowcrm-production.up.railway.app/api/v1';
       const queryParams = new URLSearchParams(cleanFilters).toString();
-      const url = `${baseUrl}/plaintiffs${queryParams ? '?' + queryParams : ''}`;
+      const url = `${baseUrl}/plaintiffs/${queryParams ? '?' + queryParams : ''}`;
       
       console.log('🚀 Using native fetch with URL:', url);
       
@@ -46,7 +46,7 @@ export const plaintiffService = {
       // Fallback to axios as last resort
       try {
         console.log('🔄 Falling back to axios...');
-        const response = await apiClient.get('/plaintiffs', { params: cleanFilters });
+        const response = await apiClient.get('/plaintiffs/', { params: cleanFilters });
         console.log('✅ Axios fallback successful:', response.data);
         return response.data;
       } catch (axiosError) {

@@ -277,3 +277,17 @@ async def export_plaintiffs(
             status_code=500,
             detail=f"Failed to export data: {str(e)}"
         )
+
+@router.get("/debug/raw")
+async def get_plaintiffs_raw(db=Depends(get_database)):
+    """Debug endpoint to see raw plaintiff data"""
+    try:
+        cursor = db.plaintiffs.find({}).limit(1)
+        plaintiffs = await cursor.to_list(length=1)
+        if plaintiffs:
+            raw_data = convert_objectid(plaintiffs[0])
+            return {"raw_data": raw_data, "type": type(raw_data).__name__}
+        else:
+            return {"error": "No plaintiffs found"}
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
