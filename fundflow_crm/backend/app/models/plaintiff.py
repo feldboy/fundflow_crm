@@ -23,6 +23,12 @@ class WorkflowStage(str, Enum):
     CONTRACTED = "Contracted"
     DECLINED = "Declined"
     CANCELLED = "Cancelled"
+    # Additional values found in database
+    INITIAL_REVIEW = "Initial Review"
+    MEDIATION = "Mediation"
+    SETTLEMENT_NEGOTIATION = "Settlement Negotiation"
+    DISCOVERY = "Discovery"
+    ACTIVE_LITIGATION = "Active Litigation"
 
 class PlaintiffBase(BaseModel):
     firstName: str = Field(..., min_length=1, max_length=100)
