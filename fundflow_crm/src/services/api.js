@@ -5,30 +5,7 @@ const PRODUCTION_API_URL = 'https://fundflowcrm-production.up.railway.app';
 
 // Determine the correct API base URL with aggressive HTTPS enforcement
 const getApiBaseUrl = () => {
-  const envUrl = import.meta.env.VITE_API_BASE_URL.replace(/^http:\/\//, 'https://'); // Ensure HTTPS
-  const isProd = import.meta.env.PROD;
-  const mode = import.meta.env.MODE;
-  const isVercel = typeof window !== 'undefined' && window.location.hostname === 'fundflow-crm.vercel.app';
-  const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-  
-  // Log for debugging
-  console.log('🔍 API URL Debug:', {
-    VITE_API_BASE_URL: envUrl,
-    PROD: isProd,
-    MODE: mode,
-    hostname: typeof window !== 'undefined' ? window.location.hostname : 'SSR',
-    protocol: typeof window !== 'undefined' ? window.location.protocol : 'SSR',
-    isVercel,
-    isHttps
-  });
-  
-  // Aggressive HTTPS enforcement
-  if (isVercel || isHttps || isProd || mode === 'production' || envUrl?.includes('vercel.app')) {
-    console.log('🔒 ENFORCING HTTPS - Production detected:', envUrl);
-    return envUrl;
-  }
-  
-  return envUrl;
+  return PRODUCTION_API_URL;
 };
 
 // Get the base URL and log it
