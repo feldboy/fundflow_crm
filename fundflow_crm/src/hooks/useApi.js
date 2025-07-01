@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import api from '../services/api'; // Import the configured axios instance
 
 // Custom hook for API calls with loading, error, and data states
 export const useApi = (apiFunction, dependencies = []) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  const enforceHttps = (url) => url.replace(/^http:\/\//, 'https://');
 
   const execute = useCallback(async (...args) => {
     if (!apiFunction) {
@@ -16,13 +15,9 @@ export const useApi = (apiFunction, dependencies = []) => {
       setLoading(true);
       setError(null);
 
-      // Enforce HTTPS for the API function
-      const result = await apiFunction(...args.map(arg => {
-        if (typeof arg === 'string' && arg.startsWith('http://')) {
-          return enforceHttps(arg);
-        }
-        return arg;
-      }));
+      // The apiFunction passed here is a method from the api service (e.g., api.get)
+      // The first argument to it is the path, which will be appended to the baseURL.
+      const result = await apiFunction(...args);
 
       setData(result);
       return result;
