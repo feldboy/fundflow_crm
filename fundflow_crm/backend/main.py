@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 import asyncio
 
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -94,13 +94,53 @@ all_origins = REQUIRED_ORIGINS + [origin for origin in env_origins if origin not
 print(f"🌐 Environment ALLOWED_ORIGINS: {os.getenv('ALLOWED_ORIGINS', 'Not set')}")
 print(f"🌐 Final CORS allowed origins: {all_origins}")
 
+# Add CORS middleware with explicit configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=all_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+# Add request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all incoming requests for debugging"""
+    print(f"🔍 Incoming request: {request.method} {request.url}")
+    print(f"🔍 Headers: {dict(request.headers)}")
+    
+    # Handle OPTIONS requests explicitly before other middleware
+    if request.method == "OPTIONS":
+        print(f"🔧 Handling OPTIONS request for: {request.url.path}")
+        origin = request.headers.get("origin", "")
+        
+        headers = {
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept, Origin, X-Requested-With",
+            "Access-Control-Max-Age": "86400",
+            "Access-Control-Allow-Credentials": "true"
+        }
+        
+        # Check if origin is allowed
+        if origin in all_origins:
+            headers["Access-Control-Allow-Origin"] = origin
+            print(f"🔧 Allowed origin: {origin}")
+        else:
+            headers["Access-Control-Allow-Origin"] = all_origins[0] if all_origins else "*"
+            print(f"🔧 Origin not in allowed list: {origin}, using default: {headers['Access-Control-Allow-Origin']}")
+        
+        return JSONResponse(
+            status_code=200,
+            content={"message": "OK", "path": request.url.path},
+            headers=headers
+        )
+    
+    # Continue with normal request processing
+    response = await call_next(request)
+    print(f"🔍 Response status: {response.status_code}")
+    return response
 
 # Security
 security = HTTPBearer()
