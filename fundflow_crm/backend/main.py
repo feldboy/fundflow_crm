@@ -80,6 +80,8 @@ app = FastAPI(
 REQUIRED_ORIGINS = [
     "https://fundflow-crm.vercel.app",  # Our production frontend
     "https://fundflow-f48671lhy-yarons-projects-601a79ac.vercel.app",  # Current deployment URL
+    "https://fundflow_crm.railway.internal",  # Railway internal domain
+    "https://fundflowcrm-production.up.railway.app",  # Railway production domain
     "http://localhost:3000",           # Local development
     "http://localhost:4028"            # Local development alternate port
 ]
