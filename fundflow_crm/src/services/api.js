@@ -33,13 +33,39 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and force HTTPS
 apiClient.interceptors.request.use(
   (config) => {
+    // Force HTTPS on ALL requests - multiple layers of protection
+    
+    // 1. Force HTTPS in baseURL
+    if (config.baseURL) {
+      config.baseURL = config.baseURL.replace(/^http:\/\//, 'https://');
+    }
+    
+    // 2. Force HTTPS in URL if it's absolute
+    if (config.url && config.url.startsWith('http://')) {
+      config.url = config.url.replace(/^http:\/\//, 'https://');
+    }
+    
+    // 3. Construct full URL and ensure it's HTTPS
+    const fullUrl = config.baseURL + config.url;
+    if (fullUrl.includes('http://')) {
+      console.warn('🚨 Blocking HTTP request, forcing HTTPS:', fullUrl);
+      const httpsUrl = fullUrl.replace(/^http:\/\//, 'https://');
+      
+      // Split back into baseURL and url
+      const urlObj = new URL(httpsUrl);
+      config.baseURL = `${urlObj.protocol}//${urlObj.host}`;
+      config.url = urlObj.pathname + urlObj.search + urlObj.hash;
+    }
+    
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    console.log('🔒 Final request URL:', config.baseURL + config.url);
     return config;
   },
   (error) => {
