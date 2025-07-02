@@ -352,3 +352,31 @@ async def test_plaintiff_list(db=Depends(get_database)):
         return {"results": results}
     except Exception as e:
         return {"error": str(e), "type": type(e).__name__}
+
+@router.get("/debug/record/{index}")
+async def debug_specific_record(index: int, db=Depends(get_database)):
+    """Debug a specific record by index"""
+    try:
+        cursor = db.plaintiffs.find({}).skip(index).limit(1)
+        plaintiffs = await cursor.to_list(length=1)
+        
+        if not plaintiffs:
+            return {"error": f"No record found at index {index}"}
+        
+        raw_data = convert_objectid(plaintiffs[0])
+        try:
+            plaintiff_response = PlaintiffResponse(**raw_data)
+            return {
+                "index": index,
+                "success": True,
+                "data": plaintiff_response.dict()
+            }
+        except Exception as validation_error:
+            return {
+                "index": index,
+                "success": False,
+                "validation_error": str(validation_error),
+                "raw_data": raw_data
+            }
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
