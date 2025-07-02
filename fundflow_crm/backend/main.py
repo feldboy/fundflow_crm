@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from app.core.database import init_database, close_database, get_database_status, get_database
 from app.core.mongo_setup import initialize_collections, seed_sample_data, check_database_health
 from app.core.config import settings, refresh_config_task
-from app.api import plaintiffs, law_firms, employees, communications, documents, ai_agents, google, config
+from app.api import plaintiffs, law_firms, employees, communications, documents, ai_agents, google, config, funding, risk_assessment, settlements, tasks, medical
 from app.core.auth import verify_token
 
 # Load environment variables
@@ -245,6 +245,13 @@ app.include_router(documents.router, prefix="/api/v1/documents", tags=["document
 app.include_router(ai_agents.router, prefix="/api/v1/ai", tags=["ai-agents"])
 app.include_router(google.router, prefix="/api/v1/google", tags=["google-services"])
 app.include_router(config.router, prefix="/api/v1/config", tags=["configuration"])
+
+# New API routers for enhanced functionality
+app.include_router(funding.router, prefix="/api/v1", tags=["funding"])
+app.include_router(risk_assessment.router, prefix="/api/v1", tags=["risk-assessment"])
+app.include_router(settlements.router, prefix="/api/v1", tags=["settlements"])
+app.include_router(tasks.router, prefix="/api/v1", tags=["tasks"])
+app.include_router(medical.router, prefix="/api/v1", tags=["medical"])
 
 if __name__ == "__main__":
     uvicorn.run(

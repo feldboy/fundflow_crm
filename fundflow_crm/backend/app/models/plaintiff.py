@@ -73,6 +73,11 @@ class PlaintiffInDB(PlaintiffBase):
     updatedAt: datetime
     documents: List[str] = []  # Document IDs
     communicationHistory: List[str] = []  # Communication IDs
+    funding: List[str] = [] # Funding IDs
+    risk_assessments: List[str] = [] # Risk Assessment IDs
+    settlements: List[str] = [] # Settlement IDs
+    tasks: List[str] = [] # Task IDs
+    medical: List[str] = [] # Medical IDs
 
     class Config:
         populate_by_name = True

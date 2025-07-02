@@ -1,67 +1,40 @@
-import apiClient from './api.js';
+import apiClient from './api';
 
 // Document API Service
 export const documentService = {
   // Get all documents
-  getAll: async (filters = {}) => {
-    const response = await apiClient.get('/documents/', { params: filters });
-    return response.data;
-  },
+  getAll: (params) => apiClient.get('/documents', { params }).then(res => res.data),
 
   // Get document by ID
-  getById: async (id) => {
-    const response = await apiClient.get(`/documents/${id}/`);
-    return response.data;
-  },
+  getById: (id) => apiClient.get(`/documents/${id}`).then(res => res.data),
+
+  // Create document
+  create: (data) => apiClient.post('/documents', data).then(res => res.data),
+
+  // Update document
+  update: (id, data) => apiClient.put(`/documents/${id}`, data).then(res => res.data),
+
+  // Delete document
+  delete: (id) => apiClient.delete(`/documents/${id}`).then(res => res.data),
 
   // Upload document
-  upload: async (formData, onUploadProgress) => {
-    const response = await apiClient.post('/documents/upload/', formData, {
+  upload: (plaintiffId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post(`/documents/upload?plaintiff_id=${plaintiffId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      onUploadProgress,
-    });
-    return response.data;
+    }).then(res => res.data);
   },
 
   // Download document
   download: async (id) => {
-    const response = await apiClient.get(`/documents/${id}/download/`, {
+    const response = await apiClient.get(`/documents/${id}/download`, {
       responseType: 'blob',
     });
     return response.data;
   },
-
-  // Update document metadata
-  update: async (id, documentData) => {
-    const response = await apiClient.put(`/documents/${id}/`, documentData);
-    return response.data;
-  },
-
-  // Delete document
-  delete: async (id) => {
-    const response = await apiClient.delete(`/documents/${id}/`);
-    return response.data;
-  },
-
-  // Get document preview
-  getPreview: async (id) => {
-    const response = await apiClient.get(`/documents/${id}/preview/`);
-    return response.data;
-  },
-
-  // Search documents
-  search: async (query) => {
-    const response = await apiClient.get('/documents/search/', { params: { q: query } });
-    return response.data;
-  },
-
-  // Get documents by plaintiff ID
-  getByPlaintiffId: async (plaintiffId) => {
-    const response = await apiClient.get(`/documents/plaintiff/${plaintiffId}/`);
-    return response.data;
-  }
 };
 
 export default documentService;

@@ -3,9 +3,12 @@ from typing import List
 from datetime import datetime
 from bson import ObjectId
 import uuid
+import aiofiles
+from fastapi.responses import FileResponse
+import os
 
 from app.core.database import get_database
-from app.models.document import DocumentCreate, DocumentUpdate, DocumentResponse
+from app.models.document import DocumentCreate, DocumentUpdate, DocumentResponse, DocumentInDB
 
 router = APIRouter()
 
@@ -131,103 +134,67 @@ async def delete_document(document_id: str, db=Depends(get_database)):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Document not found")
 
-@router.post("/upload")
-async def upload_file(
-    file: UploadFile = File(...), 
-    plaintiff_id: str = None, 
-    document_type: str = "Other",
-    db=Depends(get_database)
-):
-    """Upload a file and create document record"""
+@router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
+async def upload_document(plaintiff_id: str, file: UploadFile = File(...), db=Depends(get_database)):
+    """Upload a document and create a record"""
     
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No file selected")
+    # Generate a unique filename to avoid collisions
+    file_extension = file.filename.split('.')[-1]
+    unique_filename = f"{uuid.uuid4()}.{file_extension}"
+    file_path = f"/Users/yaronfeldboy/Documents/rocketcopy/fundflow_crm/backend/uploads/{unique_filename}"
     
-    # Validate file size (10MB limit)
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-    file_size = 0
-    file_content = await file.read()
-    file_size = len(file_content)
-    
-    if file_size > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=413, 
-            detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB"
-        )
-    
-    # Reset file pointer
-    await file.seek(0)
-    
+    # Save the file
     try:
-        # For now, we'll store file info in database and return success
-        # In production, this would upload to S3/Google Cloud Storage
-        
-        import uuid
-        file_id = str(uuid.uuid4())
-        
-        # Create document record
-        document_data = {
-            "filename": file.filename,
-            "originalName": file.filename,
-            "contentType": file.content_type,
-            "size": file_size,
-            "fileId": file_id,
-            "documentType": document_type,
-            "plaintiffId": plaintiff_id,
-            "status": "uploaded",
-            "uploadTimestamp": datetime.utcnow(),
-            "createdAt": datetime.utcnow(),
-            "updatedAt": datetime.utcnow(),
-            # For demo purposes, we'll store a hash instead of actual file
-            "storageMethod": "local_demo",
-            "notes": "File uploaded successfully - Demo mode (file not actually stored)"
-        }
-        
-        # Insert document record
-        result = await db.documents.insert_one(document_data)
-        document_data["_id"] = str(result.inserted_id)
-        
-        # Update plaintiff's documents list if plaintiff_id provided
-        if plaintiff_id:
-            from app.core.database import use_mock_db
-            from bson import ObjectId
-            
-            if use_mock_db:
-                plaintiff = await db.plaintiffs.find_one({"_id": plaintiff_id})
-            else:
-                try:
-                    plaintiff = await db.plaintiffs.find_one({"_id": ObjectId(plaintiff_id)})
-                except:
-                    # Invalid ObjectId format
-                    pass
-            
-            if plaintiff:
-                if use_mock_db:
-                    await db.plaintiffs.update_one(
-                        {"_id": plaintiff_id},
-                        {"$push": {"documents": str(result.inserted_id)}}
-                    )
-                else:
-                    await db.plaintiffs.update_one(
-                        {"_id": ObjectId(plaintiff_id)},
-                        {"$push": {"documents": str(result.inserted_id)}}
-                    )
-        
-        return {
-            "success": True,
-            "message": "File uploaded successfully",
-            "document": convert_objectid(document_data),
-            "file_info": {
-                "filename": file.filename,
-                "content_type": file.content_type,
-                "size": file_size,
-                "file_id": file_id
-            }
-        }
-        
+        async with aiofiles.open(file_path, 'wb') as out_file:
+            content = await file.read()
+            await out_file.write(content)
     except Exception as e:
-        print(f"Upload error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to upload file: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
+
+    # Create document record
+    document_data = {
+        "plaintiffId": plaintiff_id,
+        "documentType": "Other", # Or determine from file type or user input
+        "fileName": unique_filename,
+        "originalName": file.filename,
+        "storagePath": file_path,
+        "contentType": file.content_type,
+        "size": file.size,
+        "status": "Received",
+        "uploadTimestamp": datetime.utcnow(),
+        "createdAt": datetime.utcnow(),
+        "updatedAt": datetime.utcnow()
+    }
+    
+    document = DocumentCreate(**document_data)
+    result = await db.documents.insert_one(document.dict())
+    created_document = await db.documents.find_one({"_id": result.inserted_id})
+
+    if not created_document:
+        raise HTTPException(status_code=500, detail="Failed to create document record")
+
+    # Update plaintiff's documents list
+    await db.plaintiffs.update_one(
+        {"_id": ObjectId(plaintiff_id)},
+        {"$push": {"documents": str(result.inserted_id)}}
+    )
+
+    created_document = convert_objectid(created_document)
+    return DocumentResponse(**created_document)
+
+@router.get("/{document_id}/download")
+async def download_document(document_id: str, db=Depends(get_database)):
+    """Download a document file"""
+    try:
+        document = await db.documents.find_one({"_id": ObjectId(document_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid document ID")
+
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    file_path = document.get("storagePath")
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found on server")
+
+    return FileResponse(path=file_path, filename=document.get("originalName"), media_type=document.get("contentType"))

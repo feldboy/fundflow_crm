@@ -1,13 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from 'components/AppIcon';
 import { plaintiffService } from 'services/plaintiffService';
 import { exportUtils } from 'utils/apiUtils';
+import FileUpload from 'components/FileUpload';
+import { documentService } from 'services/documentService';
 
 const CaseDetailPanel = ({ case: caseData, onClose, getStatusColor, onCaseUpdate }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'documents') {
+      fetchDocuments();
+    }
+  }, [activeTab, caseData.id]);
+
+  const fetchDocuments = async () => {
+    setIsLoadingDocs(true);
+    try {
+      const docs = await documentService.getAll({ plaintiff_id: caseData.id });
+      setDocuments(docs);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    } finally {
+      setIsLoadingDocs(false);
+    }
+  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -143,6 +165,40 @@ const CaseDetailPanel = ({ case: caseData, onClose, getStatusColor, onCaseUpdate
     } catch (error) {
       console.error('Error updating status:', error);
       alert('Failed to update status: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleUploadSuccess = () => {
+    fetchDocuments(); // Refresh document list after upload
+  };
+
+  const handleDownload = async (doc) => {
+    try {
+      const blob = await documentService.download(doc.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = doc.originalName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      alert('Failed to download document.');
+    }
+  };
+
+  const handleDelete = async (docId) => {
+    if (window.confirm('Are you sure you want to delete this document?')) {
+      try {
+        await documentService.delete(docId);
+        fetchDocuments(); // Refresh the list
+      } catch (error) {
+        console.error('Error deleting document:', error);
+        alert('Failed to delete document.');
+      }
     }
   };
 
@@ -343,37 +399,35 @@ const CaseDetailPanel = ({ case: caseData, onClose, getStatusColor, onCaseUpdate
           )}
 
           {activeTab === 'documents' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-text-primary">Case Documents</h3>
-                <button className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-micro text-sm">
-                  <Icon name="Upload" size={16} />
-                  <span>Upload Document</span>
-                </button>
+            <div>
+              <h3 className="text-lg font-medium text-text-primary mb-4">Case Documents</h3>
+              <div className="mb-6">
+                <FileUpload plaintiffId={caseData.id} onUploadSuccess={handleUploadSuccess} />
               </div>
-              
-              <div className="space-y-3">
-                {caseData.documents.map((doc, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Icon name="FileText" size={16} className="text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-text-primary">{doc}</p>
-                        <p className="text-sm text-text-secondary">Uploaded {formatDate(caseData.lastActivity)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button className="p-1 text-text-secondary hover:text-text-primary transition-micro">
-                        <Icon name="Download" size={16} />
-                      </button>
-                      <button className="p-1 text-text-secondary hover:text-text-primary transition-micro">
-                        <Icon name="Eye" size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div>
+                <h4 className="font-bold mb-2">Uploaded Files:</h4>
+                {isLoadingDocs ? (
+                  <p>Loading documents...</p>
+                ) : (
+                  <ul>
+                    {documents.map(doc => (
+                      <li key={doc.id} className="flex justify-between items-center p-2 bg-background rounded-lg mb-2">
+                        <div>
+                          <p className="font-medium">{doc.originalName}</p>
+                          <p className="text-sm text-text-secondary">Uploaded on: {formatDate(new Date(doc.uploadTimestamp))}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button onClick={() => handleDownload(doc)} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-micro">
+                            <Icon name="Download" size={16} />
+                          </button>
+                          <button onClick={() => handleDelete(doc.id)} className="p-2 text-error hover:bg-error/10 rounded-lg transition-micro">
+                            <Icon name="Trash2" size={16} />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           )}

@@ -139,3 +139,15 @@ export const testConnection = async () => {
     throw new Error('API connection test failed');
   }
 };
+
+// Document upload function
+export const uploadDocument = (plaintiffId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return apiClient.post(`/documents/upload?plaintiff_id=${plaintiffId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
