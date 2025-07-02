@@ -16,10 +16,13 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
-          ui: ['lucide-react', 'framer-motion']
+          ui: ['lucide-react', 'framer-motion', 'react-dropzone']
         }
       }
     }
+  },
+  optimizeDeps: {
+    include: ['react-dropzone']
   },
   plugins: [tsconfigPaths(), react(), tagger()],
   server: {

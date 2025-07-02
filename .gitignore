@@ -135,3 +135,4 @@ package-lock.json
 .idea/
 vite.config.*s.*
 >>>>>>> e918c62c15aab51aaa14083e245da56483b50859
+.vercel
