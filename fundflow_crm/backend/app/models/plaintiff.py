@@ -14,6 +14,7 @@ class CaseType(str, Enum):
     MOTORCYCLE_ACCIDENT = "Motorcycle Accident"
     TRUCK_ACCIDENT = "Truck Accident"
     PERSONAL_INJURY = "Personal Injury"
+    EMPLOYMENT_LAW = "Employment Law"
     OTHER = "Other"
 
 class WorkflowStage(str, Enum):
