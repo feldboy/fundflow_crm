@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Button } from './Button';
+import { Button } from './ui/Button';
 import { uploadDocument } from '../../services/api'; // Assuming you have this service
 
 const FileUpload = ({ plaintiffId, onUploadSuccess }) => {
