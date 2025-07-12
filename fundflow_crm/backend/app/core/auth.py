@@ -1,7 +1,8 @@
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
 
 # Password hashing
@@ -44,3 +45,14 @@ def verify_token(token: str):
         return username
     except JWTError:
         raise credentials_exception
+
+# Security scheme
+security = HTTPBearer()
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    Extract and verify the current user from JWT token
+    """
+    token = credentials.credentials
+    username = verify_token(token)
+    return {"username": username}
