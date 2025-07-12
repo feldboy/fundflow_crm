@@ -27,12 +27,15 @@ python -c "import fastapi; print('FastAPI version:', fastapi.__version__)"
 
 echo "=== Testing main.py import ==="
 python -c "import main; print('main.py imports successfully')" || {
-    echo "main.py import failed, trying simple version..."
-    if [ -f "main_simple.py" ]; then
+    echo "main.py import failed, trying working version..."
+    if [ -f "main_working.py" ]; then
+        echo "Using main_working.py..."
+        exec uvicorn main_working:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info
+    elif [ -f "main_simple.py" ]; then
         echo "Using main_simple.py for testing..."
         exec uvicorn main_simple:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info
     else
-        echo "ERROR: Neither main.py nor main_simple.py could be imported!"
+        echo "ERROR: No working main file found!"
         exit 1
     fi
 }
